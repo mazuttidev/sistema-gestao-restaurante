@@ -104,11 +104,17 @@ Backend em **Node.js com TypeScript** (route handlers e server actions do Next.j
 | Front + back   | Next.js (App Router) + TypeScript, backend Node.js | Um só repositório e deploy                       |
 | UI             | Tailwind CSS + shadcn/ui                           | Componentes acessíveis e rápidos de montar       |
 | Banco          | PostgreSQL + Prisma                                | Modelo relacional simples, migrações versionadas |
-| Auth           | Auth.js (credenciais)                              | Um usuário gestor, sem dependência externa       |
+| Auth           | Sessão própria: JWT (`jose`) em cookie + `scrypt`  | Padrão do guia oficial do Next 16; sem lib extra |
 | Arte 1080×1920 | `@vercel/og` (Satori) ou canvas no servidor        | PNG gerado a partir de template                  |
 | Impressão      | Página com CSS `@media print` / PDF                | Sem dependência pesada                           |
 | Testes         | Vitest (gerador) + Playwright (E2E)                | O gerador é a parte crítica                      |
 | Hospedagem     | Vercel + Neon/Supabase (Postgres)                  | Plano gratuito suficiente                        |
+
+**Decisões de implementação (04/11/2026):**
+
+- `cacheComponents` do Next 16 fica **desligado**. O painel é todo autenticado e dinâmico; com ele ligado, toda leitura de sessão precisa ficar atrás de `<Suspense>`, o que complica o código sem ganho para um único usuário.
+- Autenticação em camadas, como no guia do Next: `src/proxy.ts` faz só a checagem otimista do cookie; `src/lib/auth/dal.ts` (`verificarSessao`, `obterUsuarioAtual`) é a verificação definitiva, chamada por páginas e server actions.
+- O usuário gestor é criado pelo seed a partir de `SEED_ADMIN_*` no `.env` (a senha nunca fica no código).
 
 ### 4.1 Modelo de dados inicial
 
