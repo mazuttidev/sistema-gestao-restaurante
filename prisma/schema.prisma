@@ -1,0 +1,170 @@
+// Modelo de dados do Cardápio Certo.
+// Visão geral e diagrama em docs/MODELO_DADOS.md.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Categoria culinária do prato; também define o que uma posição livre aceita.
+enum Categoria {
+  ARROZ
+  FEIJAO
+  MASSA
+  CARNE
+  FRANGO
+  PEIXE
+  SUINO
+  RISOTO
+  POLENTA
+  LEGUME
+  SALGADO
+  QUEIJO
+  GRELHA
+  OUTRO
+}
+
+/// Método de preparo. FRITADEIRA conta para o limite de fritos do dia (RN06).
+enum MetodoPreparo {
+  FORNO
+  GRELHA
+  FRITADEIRA
+  PANELA
+  NENHUM
+}
+
+enum Restricao {
+  SEM_LACTOSE
+  SEM_GLUTEN
+  VEGANO
+  VEGETARIANO
+}
+
+/// Área física do buffet (RN02).
+enum Area {
+  CUBA
+  RECHAUD
+  GRELHA
+}
+
+/// Como o gerador preenche a posição (RN02).
+enum TipoPosicao {
+  /// Sempre o mesmo prato (uma opção).
+  FIXA
+  /// Sempre existe, alternando entre as opções cadastradas.
+  VARIAVEL
+  /// O gerador escolhe um prato ativo da categoria da posição.
+  LIVRE
+  /// Reservada para reaproveitamento; preenchida à mão.
+  SOBRAS
+}
+
+enum StatusCardapio {
+  RASCUNHO
+  HOMOLOGADO
+}
+
+model Usuario {
+  id        String   @id @default(cuid())
+  nome      String
+  email     String   @unique
+  senhaHash String
+  criadoEm  DateTime @default(now())
+}
+
+model Prato {
+  id              String        @id @default(cuid())
+  nome            String
+  /// Nome sem acentos, em minúsculas e sem espaços duplicados; garante unicidade.
+  nomeNormalizado String        @unique
+  categoria       Categoria
+  preparo         MetodoPreparo
+  /// Quantas cubas o prato ocupa (ex.: arroz branco e pastel ocupam 2).
+  cubas           Int           @default(1)
+  restricoes      Restricao[]
+  ativo           Boolean       @default(true)
+  observacao      String?
+  criadoEm        DateTime      @default(now())
+  atualizadoEm    DateTime      @updatedAt
+
+  opcoesDePosicao PosicaoOpcao[]
+  itens           ItemCardapio[]
+
+  @@index([categoria, ativo])
+}
+
+/// Uma posição física do buffet (cuba, rechaud ou grelha) e a regra para preenchê-la.
+model Posicao {
+  id        String      @id @default(cuid())
+  area      Area
+  /// Ordem dentro da área (cuba 1..9, rechaud 1..7).
+  ordem     Int
+  /// Rótulo exibido ao gestor (ex.: "Feijão", "Massa", "Sobras").
+  nome      String
+  tipo      TipoPosicao
+  /// Obrigatória para posições LIVRE.
+  categoria Categoria?
+  /// Dias da semana em que a posição existe (0 = domingo … 6 = sábado). Vazio = todos os dias de funcionamento.
+  dias      Int[]
+  ativa     Boolean     @default(true)
+
+  opcoes PosicaoOpcao[]
+  itens  ItemCardapio[]
+
+  @@unique([area, ordem])
+}
+
+/// Pratos permitidos numa posição FIXA (um) ou VARIAVEL (vários).
+model PosicaoOpcao {
+  posicaoId String
+  pratoId   String
+  posicao   Posicao @relation(fields: [posicaoId], references: [id], onDelete: Cascade)
+  prato     Prato   @relation(fields: [pratoId], references: [id], onDelete: Cascade)
+
+  @@id([posicaoId, pratoId])
+}
+
+/// Configuração geral (registro único, id = 1).
+model Configuracao {
+  id                     Int      @id @default(1)
+  /// Dias de funcionamento (0 = domingo … 6 = sábado). Padrão: terça a domingo.
+  diasFuncionamento      Int[]    @default([2, 3, 4, 5, 6, 0])
+  maxFritosDia           Int      @default(4)
+  /// Não repetir pratos servidos nas últimas N semanas.
+  semanasSemRepetir      Int      @default(1)
+  naoRepetirDiasSeguidos Boolean  @default(true)
+  atualizadoEm           DateTime @updatedAt
+}
+
+model Cardapio {
+  id           String         @id @default(cuid())
+  /// Primeiro dia da semana do cardápio (terça-feira no padrão).
+  semanaInicio DateTime       @unique @db.Date
+  status       StatusCardapio @default(RASCUNHO)
+  criadoEm     DateTime       @default(now())
+  homologadoEm DateTime?
+
+  itens ItemCardapio[]
+}
+
+model ItemCardapio {
+  id         String   @id @default(cuid())
+  cardapioId String
+  data       DateTime @db.Date
+  posicaoId  String
+  /// Nulo em posições de sobras ainda não preenchidas.
+  pratoId    String?
+  /// Itens travados não são substituídos ao regenerar (RF09).
+  travado    Boolean  @default(false)
+
+  cardapio Cardapio @relation(fields: [cardapioId], references: [id], onDelete: Cascade)
+  posicao  Posicao  @relation(fields: [posicaoId], references: [id], onDelete: Restrict)
+  prato    Prato?   @relation(fields: [pratoId], references: [id], onDelete: Restrict)
+
+  @@unique([cardapioId, data, posicaoId])
+  @@index([pratoId, data])
+}
