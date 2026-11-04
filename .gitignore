@@ -1,0 +1,38 @@
+# dependências
+/node_modules
+/.pnp
+.pnp.*
+
+# testes
+/coverage
+/playwright-report
+/test-results
+
+# next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# variáveis de ambiente (só o exemplo é versionado)
+.env*
+!.env.example
+
+# dados do restaurante (cardápios históricos) ficam fora do Git
+/referencias/
+*.rar
+
+# configurações locais do Claude Code e skills de agente instaladas pelo Prisma
+.claude/settings.local.json
+.claude/skills/
+.agents/
+skills-lock.json
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+.vercel
+
+/src/generated/prisma
