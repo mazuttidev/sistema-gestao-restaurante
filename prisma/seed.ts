@@ -10,6 +10,7 @@ import {
   type MetodoPreparo,
   type TipoPosicao,
 } from "../src/generated/prisma/client";
+import { gerarHashSenha } from "../src/lib/auth/senha";
 import { normalizarNome } from "../src/lib/texto";
 
 const prisma = new PrismaClient({
@@ -188,7 +189,30 @@ async function main() {
     }
   }
 
+  await criarGestor();
+
   console.log(`Seed concluído: ${PRATOS.length} pratos, ${POSICOES.length} posições.`);
+}
+
+/** Cria o usuário gestor a partir do .env, se ainda não existir. A senha nunca fica no código. */
+async function criarGestor() {
+  const { SEED_ADMIN_NOME, SEED_ADMIN_EMAIL, SEED_ADMIN_SENHA } = process.env;
+  if (!SEED_ADMIN_EMAIL || !SEED_ADMIN_SENHA) {
+    console.log("SEED_ADMIN_EMAIL/SEED_ADMIN_SENHA não definidos: gestor não criado.");
+    return;
+  }
+  if (SEED_ADMIN_SENHA.length < 8) throw new Error("SEED_ADMIN_SENHA precisa de 8+ caracteres");
+
+  const email = SEED_ADMIN_EMAIL.trim().toLowerCase();
+  if (await prisma.usuario.findUnique({ where: { email } })) return;
+  await prisma.usuario.create({
+    data: {
+      nome: SEED_ADMIN_NOME?.trim() || "Gestor",
+      email,
+      senhaHash: await gerarHashSenha(SEED_ADMIN_SENHA),
+    },
+  });
+  console.log(`Gestor criado: ${email}`);
 }
 
 main()
