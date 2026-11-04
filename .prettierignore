@@ -1,0 +1,7 @@
+.next
+node_modules
+coverage
+src/generated
+referencias
+package-lock.json
+*.docx.md
