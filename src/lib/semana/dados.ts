@@ -247,3 +247,22 @@ export async function reabrir(semanaInicio: DataISO): Promise<void> {
     data: { status: "RASCUNHO", homologadoEm: null },
   });
 }
+
+/** Cardápios já criados, do mais recente para o mais antigo (RF12). */
+export async function listarCardapios() {
+  const cardapios = await prisma.cardapio.findMany({
+    orderBy: { semanaInicio: "desc" },
+    select: {
+      id: true,
+      semanaInicio: true,
+      status: true,
+      homologadoEm: true,
+      _count: { select: { itens: { where: { pratoId: { not: null } } } } },
+    },
+  });
+  return cardapios.map(({ _count, semanaInicio, ...c }) => ({
+    ...c,
+    semanaInicio: paraDataISO(semanaInicio),
+    pratosServidos: _count.itens,
+  }));
+}
