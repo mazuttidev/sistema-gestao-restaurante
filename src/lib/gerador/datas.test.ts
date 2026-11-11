@@ -4,9 +4,12 @@ import {
   diaInicialDaSemana,
   diaMes,
   diasDaSemana,
+  ehDataISO,
+  hojeNoRestaurante,
   inicioDaSemana,
   nomeDoDia,
   paraDataISO,
+  semanaPadrao,
   somarDias,
 } from "./datas";
 
@@ -49,6 +52,24 @@ describe("datas", () => {
       "2026-11-14",
       "2026-11-15",
     ]);
+  });
+
+  it("abre a semana em curso, ou a próxima no dia de folga", () => {
+    expect(semanaPadrao("2026-11-12", TER_A_DOM)).toBe("2026-11-10"); // quinta
+    expect(semanaPadrao("2026-11-15", TER_A_DOM)).toBe("2026-11-10"); // domingo
+    expect(semanaPadrao("2026-11-16", TER_A_DOM)).toBe("2026-11-17"); // segunda (fechado)
+  });
+
+  it("pega a data de hoje no fuso de São Paulo", () => {
+    // 01:00 UTC do dia 11 ainda é dia 10 em São Paulo (UTC-3).
+    expect(hojeNoRestaurante(new Date("2026-11-11T01:00:00Z"))).toBe("2026-11-10");
+  });
+
+  it("valida datas AAAA-MM-DD", () => {
+    expect(ehDataISO("2026-11-10")).toBe(true);
+    expect(ehDataISO("2026-02-30")).toBe(false);
+    expect(ehDataISO("10/11/2026")).toBe(false);
+    expect(ehDataISO(undefined)).toBe(false);
   });
 
   it("formata dia/mês", () => {

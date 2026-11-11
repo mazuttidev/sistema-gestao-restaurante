@@ -43,6 +43,29 @@ export function inicioDaSemana(data: DataISO, diasFuncionamento: number[]): Data
   return somarDias(data, -((atual - alvo + 7) % 7));
 }
 
+/**
+ * Semana que o gestor quer ver ao abrir o painel: a semana em curso, ou a próxima quando
+ * hoje é dia de folga (ex.: na segunda, com o restaurante fechado, ele planeja a semana
+ * que começa na terça).
+ */
+export function semanaPadrao(hoje: DataISO, diasFuncionamento: number[]): DataISO {
+  const atual = inicioDaSemana(hoje, diasFuncionamento);
+  return diasFuncionamento.includes(diaDaSemana(hoje)) ? atual : somarDias(atual, 7);
+}
+
+/** Data de hoje no fuso do restaurante. */
+export function hojeNoRestaurante(agora = new Date()): DataISO {
+  // en-CA formata como AAAA-MM-DD.
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(agora);
+}
+
+/** Aceita só datas válidas no formato AAAA-MM-DD. */
+export function ehDataISO(valor: unknown): valor is DataISO {
+  if (typeof valor !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false;
+  const data = deDataISO(valor);
+  return !Number.isNaN(data.getTime()) && paraDataISO(data) === valor;
+}
+
 /** Dias de funcionamento da semana que começa em `semanaInicio`, em ordem. */
 export function diasDaSemana(semanaInicio: DataISO, diasFuncionamento: number[]): DataISO[] {
   const dias: DataISO[] = [];
