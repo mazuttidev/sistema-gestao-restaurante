@@ -14,9 +14,12 @@ import {
   somarDias,
 } from "@/lib/gerador/datas";
 import { obterConfiguracao } from "@/lib/regras/dados";
+import { pratosPorDia } from "@/lib/exportacao/dados";
+import { textoMensagem } from "@/lib/exportacao/texto";
 import { obterSemana } from "@/lib/semana/dados";
 import { AcoesSemana } from "./acoes-semana";
 import { GradeSemana } from "./grade-semana";
+import { PainelExportacao } from "./painel-exportacao";
 
 export const metadata: Metadata = { title: "Semana" };
 
@@ -91,16 +94,27 @@ export default async function PaginaSemana({ searchParams }: PageProps<"/semana"
           que quiser.
         </Vazio>
       ) : (
-        <GradeSemana
-          semanaInicio={semanaInicio}
-          dias={dias}
-          regras={semana.regras}
-          pratos={semana.pratos}
-          posicoes={posicoes}
-          itens={cardapio.itens}
-          resumo={resumo}
-          editavel={estado === "rascunho"}
-        />
+        <>
+          {estado === "homologado" && (
+            <PainelExportacao
+              semanaInicio={semanaInicio}
+              dias={[...pratosPorDia(semana)].map(([data, pratos]) => ({
+                data,
+                mensagem: textoMensagem(data, pratos),
+              }))}
+            />
+          )}
+          <GradeSemana
+            semanaInicio={semanaInicio}
+            dias={dias}
+            regras={semana.regras}
+            pratos={semana.pratos}
+            posicoes={posicoes}
+            itens={cardapio.itens}
+            resumo={resumo}
+            editavel={estado === "rascunho"}
+          />
+        </>
       )}
     </>
   );
