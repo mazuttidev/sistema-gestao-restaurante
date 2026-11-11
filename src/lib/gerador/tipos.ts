@@ -49,7 +49,6 @@ export type TipoAlerta =
   | "repetiu_semana_anterior"
   | "repetiu_no_dia"
   | "posicao_vazia"
-  | "sem_candidato"
   | "prato_inativo";
 
 export type Alerta = {
