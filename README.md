@@ -84,7 +84,9 @@ npm run db:migrate
 npx prisma db seed
 ```
 
-Cria a configuração padrão (terça a domingo, limite de 4 fritos, sem repetir a semana anterior), a estrutura do buffet (18 posições), cerca de 70 pratos frequentes dos cardápios históricos e o **usuário gestor** com os dados do `.env`. Pode rodar de novo sem duplicar nada.
+Cria a configuração padrão (terça a domingo, limite de 4 fritos, sem repetir a semana anterior), a estrutura do buffet (18 posições), o catálogo consolidado dos cardápios históricos e o **usuário gestor** com os dados do `.env`. Pode rodar de novo sem duplicar nada.
+
+O catálogo em `prisma/pratos-historicos.json` contém nome, categoria, preparo, cubas e observações para revisão em **Pratos**. O [relatório de consolidação](docs/importacao-pratos/relatorio.md) registra duplicatas e entradas rejeitadas. Queijo usa rodízio variável; as demais categorias livres têm repertório para duas semanas sem repetição. O seed preserva alterações feitas pelo gestor em execuções seguintes.
 
 ### 7. Rodar
 
