@@ -36,3 +36,6 @@ npm-debug.log*
 .vercel
 
 /src/generated/prisma
+
+/regrasNegocio*
+/cardapiosAntigos*
